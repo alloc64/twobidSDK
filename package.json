@@ -1,0 +1,9 @@
+{
+  "name": "@twobid/ionic-plugin",
+  "version": "0.0.1",
+  "description": "A Capacitor plugin for Twobid SDK",
+  "main": "twobidsdk.plugin.ts",
+  "devDependencies": {
+    "@capacitor/core": "4.8.0"
+  }
+}
