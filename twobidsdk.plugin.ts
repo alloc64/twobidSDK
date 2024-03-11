@@ -1,5 +1,185 @@
 import {registerPlugin} from "@capacitor/core";
 
+let TwobidSDKPlugin: ITwobidSDK;
+
+export enum ConvertPrice {
+  KEEP_AS_IS = "keep_as_is",
+  WEEKS = "weeks",
+  MONTHS = "months"
+}
+
+export class AppVersionData {
+  versionCode?: number;
+  versionName?: string;
+  hdataHash?: string;
+  hdataVersion?: string;
+  twobidSdkVersion?: string;
+}
+
+export class TwobidSDKProxy implements ITwobidSDK {
+  htmlAdViews: HTMLHtmlElement[] = [];
+
+  constructor() {
+    this.billingRegisterPurchaseStateChange(async (state) => {
+      this.updateAdViewsVisibility(state);
+    }).then();
+  }
+
+  // analytics
+  analyticsSetUserId(args: { userId: string }): void {
+    TwobidSDKPlugin.analyticsSetUserId(args);
+  }
+
+  analyticsLogEvent(args: { event: string, bundle?: object }): void {
+    TwobidSDKPlugin.analyticsLogEvent(args);
+  }
+
+  analyticsLogScreen(args: { screen: string }): void {
+    TwobidSDKPlugin.analyticsLogScreen(args);
+  }
+
+  analyticsLogRevenue(args: { amount: number, currency: string, name: string, productId: string }): void {
+    TwobidSDKPlugin.analyticsLogRevenue(args);
+  }
+
+  // ads
+  adsRegisterAdView(args: { viewId: string }): void {
+    TwobidSDKPlugin.adsRegisterAdView(args);
+  }
+
+  registerHtmlAdView(view: HTMLHtmlElement) {
+    if (!view) {
+      console.log("Attempted to register undefined HTML adview");
+      return;
+    }
+
+    this.htmlAdViews.push(view);
+  };
+
+  async updateAdViewsVisibility(result: PurchaseStateChangeResult) {
+    console.log("TwobidSDK::updateAdViewsVisibility " + JSON.stringify(result));
+
+    let hasPremium = await this.adsNoAds();
+
+    for (let view of this.htmlAdViews) {
+      if (view && view.style)
+        view.style.visibility = hasPremium ? "hidden" : "visible";
+    }
+
+    return Promise.resolve(undefined)
+  }
+
+  adsInsertBannerAdInto(args: { placement: string; viewId: string }): void {
+    TwobidSDKPlugin.adsInsertBannerAdInto(args);
+  }
+
+  adsShowInterstitial(args: { placement: string; adSource?: AdSource }): Promise<void> {
+    return TwobidSDKPlugin.adsShowInterstitial(args);
+  }
+
+  adsShowInterstitialIfNoPremium(args: { placement: string; adSource?: AdSource }): Promise<void> {
+    return TwobidSDKPlugin.adsShowInterstitialIfNoPremium(args);
+  }
+
+  adsShowRewardedVideo(args: { placement: string }, callback: (result: {
+    type: string,
+    amount: number
+  }) => void): Promise<void> {
+    return TwobidSDKPlugin.adsShowRewardedVideo(args, callback);
+  }
+
+  adsShowExitAdDialog(args: { placement: string }, callback: (result: {canceled: boolean}) => void): Promise<void> {
+    return TwobidSDKPlugin.adsShowExitAdDialog(args, callback);
+  }
+
+  async adsNoAds(): Promise<boolean> {
+    return (await this.adsNoAdsInternal()).result;
+  }
+
+  adsNoAdsInternal(): Promise<{ result: boolean }> {
+    return TwobidSDKPlugin.adsNoAdsInternal();
+  }
+
+  // billing
+  billingGetDefaultProductPrice(args: { productName: string, convertPrice: ConvertPrice }): Promise<string> {
+    return TwobidSDKPlugin.billingGetDefaultProductPrice(args);
+  }
+
+  billingPurchaseConsumable(args: { purchaseId: string; productNames: string[] }, callback: PurchaseCallback): void {
+    TwobidSDKPlugin.billingPurchaseConsumable(args, callback);
+  }
+
+  billingPurchaseSubscription(args: {
+    purchaseId: string;
+    productName: string;
+    offerId?: string | null
+  }, callback: PurchaseCallback): void {
+    TwobidSDKPlugin.billingPurchaseSubscription(args, callback);
+  }
+
+  billingGetPurchases(): Promise<{ purchases: Purchase[] }> {
+    return TwobidSDKPlugin.billingGetPurchases();
+  }
+
+  billingRegisterPurchaseStateChange(callback: PurchaseStateChangeCallback): Promise<string> {
+    return TwobidSDKPlugin.billingRegisterPurchaseStateChange(callback);
+  }
+
+  billingUnregisterPurchaseStateChange(options: { callbackId: string }): Promise<void> {
+    return TwobidSDKPlugin.billingUnregisterPurchaseStateChange(options);
+  }
+
+  // consent
+  requestConsent(): Promise<{ hasConsent: boolean }> {
+    return TwobidSDKPlugin.requestConsent();
+  }
+
+  changeConsent(): Promise<{ hasConsent: boolean }> {
+    return TwobidSDKPlugin.changeConsent();
+  }
+
+  // personalization
+  personalizationGetBoolean(args: { key: string; defaultValue: boolean }): Promise<boolean> {
+    return TwobidSDKPlugin.personalizationGetBoolean(args);
+  }
+
+  personalizationGetDouble(args: { key: string; defaultValue: number }): Promise<number> {
+    return TwobidSDKPlugin.personalizationGetDouble(args);
+  }
+
+  personalizationGetInt(args: { key: string; defaultValue: number }): Promise<number> {
+    return TwobidSDKPlugin.personalizationGetInt(args);
+  }
+
+  personalizationGetLong(args: { key: string; defaultValue: number }): Promise<number> {
+    return TwobidSDKPlugin.personalizationGetLong(args);
+  }
+
+  personalizationGetString(args: { key: string; defaultValue: string }): Promise<string> {
+    return TwobidSDKPlugin.personalizationGetString(args);
+  }
+
+  // rating
+  nativeRatingDialog(): void {
+    TwobidSDKPlugin.nativeRatingDialog();
+  }
+
+  ratingDialog(args: { placementId: string, useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
+    return TwobidSDKPlugin.ratingDialog(args);
+  }
+
+  // update
+  updateRequest(): void {
+    TwobidSDKPlugin.updateRequest();
+  }
+
+  // internal stuff
+
+  version(): Promise<AppVersionData> {
+    return TwobidSDKPlugin.version();
+  }
+}
+
 export enum AdSource {
   ADMOB = 1,
   TWOBID = 2,
@@ -47,66 +227,142 @@ export type PurchaseCallback = (result: PurchaseResult) => void;
 
 export type PurchaseStateChangeCallback = (state: PurchaseStateChangeResult) => void;
 
-export interface TwobidSDKImpl {
-  registerAdView(args: { viewId: string }): void;
+export interface ITwobidSDK {
+  // analytics
+  analyticsSetUserId(args: { userId: string }): void;
 
-  event(args: { event: string, value: object }): void;
+  analyticsLogEvent(args: { event: string, bundle?: object }): void;
 
-  insertAnchoredBannerAdInto(args: { placement: string, viewId: string }): void;
+  analyticsLogScreen(args: { screen: string }): void;
 
-  insertInlineBannerAdInto(args: { placement: string, viewId: string }): void;
+  analyticsLogRevenue(args: { amount: number, currency: string, name: string, productId: string }): void;
 
-  showInterstitial(args: { placement: string, adSource?: AdSource }): Promise<void>;
+  // ads
+  adsRegisterAdView(args: { viewId: string }): void;
 
-  showRewardedVideo(args: { placement: string }, callback: (val: string) => void): Promise<void>;
+  adsInsertBannerAdInto(args: { placement: string, viewId: string }): void;
 
-  getDefaultProductPrice(args: { productName: string }): Promise<string>;
+  adsShowInterstitial(args: { placement: string, adSource?: AdSource }): Promise<void>;
 
-  purchaseConsumable(args: { purchaseId: string, productNames: string[] }, callback: PurchaseCallback): void;
+  adsShowInterstitialIfNoPremium(args: { placement: string, adSource?: AdSource }): Promise<void>;
 
-  purchaseSubscription(args: {
+  adsShowRewardedVideo(args: { placement: string }, callback: (result: {
+    type: string,
+    amount: number
+  }) => void): Promise<void>;
+
+  adsShowExitAdDialog(args: { placement: string }, callback: (result: {canceled: boolean}) => void): Promise<void>;
+
+  // billing
+  billingGetDefaultProductPrice(args: { productName: string, convertPrice: ConvertPrice }): Promise<string>;
+
+  billingPurchaseConsumable(args: { purchaseId: string, productNames: string[] }, callback: PurchaseCallback): void;
+
+  billingPurchaseSubscription(args: {
     purchaseId: string,
     productName: string,
     offerId?: string | null
   }, callback: PurchaseCallback): void;
 
-  getPurchases(): Promise<{ purchases: Purchase[] }>;
+  billingGetPurchases(): Promise<{ purchases: Purchase[] }>;
 
-  registerPurchaseStateChange(callback: PurchaseStateChangeCallback): Promise<string>;
+  billingRegisterPurchaseStateChange(callback: PurchaseStateChangeCallback): Promise<string>;
 
-  unregisterPurchaseStateChange(options: { callbackId: string }): Promise<void>;
+  billingUnregisterPurchaseStateChange(options: { callbackId: string }): Promise<void>;
 
-  rate(): void;
+  adsNoAdsInternal(): Promise<{ result: boolean }>;
 
-  update(): void;
+  adsNoAds(): Promise<boolean>;
 
+  // consent
   requestConsent(): Promise<{ hasConsent: boolean }>;
 
   changeConsent(): Promise<{ hasConsent: boolean }>;
+
+  // personalization
+  personalizationGetString(args: { key: string, defaultValue: string }): Promise<string>;
+
+  personalizationGetLong(args: { key: string, defaultValue: number }): Promise<number>;
+
+  personalizationGetInt(args: { key: string, defaultValue: number }): Promise<number>;
+
+  personalizationGetBoolean(args: { key: string, defaultValue: boolean }): Promise<boolean>;
+
+  personalizationGetDouble(args: { key: string, defaultValue: number }): Promise<number>;
+
+  // rating
+  nativeRatingDialog(): void;
+
+  ratingDialog(args: { placementId: string, useDefaultCallback?: boolean }): Promise<{ result: boolean }>
+
+  // update
+  updateRequest(): void;
+
+  // internal stuff
+
+  version(): Promise<AppVersionData>;
 }
 
-export class TwobidSDKWebImpl implements TwobidSDKImpl {
-  event(args: { event: string; value: object }): void {
-    console.log("TwobidSDK::event ", args);
+export class TwobidSDKDummy implements ITwobidSDK {
+  // analytics
+  analyticsSetUserId(args: { userId: string }): void {
+    console.log("TwobidSDK::analyticsSetUserId ", args);
   }
 
-  getDefaultProductPrice(args: { productName: string }): Promise<string> {
+  analyticsLogEvent(args: { event: string, bundle?: object }): void {
+    console.log("TwobidSDK::analyticsLogEvent ", args);
+  }
+
+  analyticsLogScreen(args: { screen: string }): void {
+    console.log("TwobidSDK::analyticsLogScreen ", args);
+  }
+
+  analyticsLogRevenue(args: { amount: number, currency: string, name: string, productId: string }): void {
+    console.log("TwobidSDK::analyticsLogRevenue ", args);
+  }
+
+  // ads
+  adsRegisterAdView(args: { viewId: string }): void {
+    console.log("TwobidSDK::registerAdView ", args.viewId);
+  }
+
+  adsInsertBannerAdInto(args: { placement: string; viewId: string }): void {
+    console.log("TwobidSDK::insertBannerAdInto ", args);
+  }
+
+  adsShowInterstitial(args: { placement: string; adSource?: AdSource }): Promise<void> {
+    console.log("TwobidSDK::showInterstitial ", args);
+    return Promise.resolve(undefined);
+  }
+
+  adsShowInterstitialIfNoPremium(args: { placement: string; adSource?: AdSource }): Promise<void> {
+    console.log("TwobidSDK::showInterstitialIfNoPremium ", args);
+    return Promise.resolve(undefined);
+  }
+
+  adsShowRewardedVideo(args: { placement: string }, callback: (result: {
+    type: string,
+    amount: number
+  }) => void): Promise<void> {
+    console.log("TwobidSDK::showRewardedVideo ", args.placement);
+    return Promise.resolve(undefined);
+  }
+
+  adsShowExitAdDialog(args: { placement: string }, callback: (result: {canceled: boolean}) => void): Promise<void> {
+    console.log("TwobidSDK::adsShowExitAdDialog ", args.placement);
+    return Promise.resolve(undefined);
+  }
+
+  // billing
+  billingGetDefaultProductPrice(args: { productName: string, convertPrice: ConvertPrice }): Promise<string> {
     return Promise.resolve("N/A");
   }
 
-  insertAnchoredBannerAdInto(args: { placement: string; viewId: string }): void {
-    console.log("TwobidSDK::insertAnchoredBannerAdInto ", args);
-  }
-
-  insertInlineBannerAdInto(args: { placement: string; viewId: string }): void {
-    console.log("TwobidSDK::insertInlineBannerAdInto ", args);
-  }
-
-  purchaseConsumable(args: { purchaseId: string; productNames: string[] }, callback: PurchaseCallback): void {
+  billingPurchaseConsumable(args: { purchaseId: string; productNames: string[] }, callback: PurchaseCallback): void {
     console.log("TwobidSDK::purchaseConsumable ", args);
   }
 
-  purchaseSubscription(args: {
+  billingPurchaseSubscription(args: {
     purchaseId: string;
     productName: string;
     offerId?: string | null
@@ -114,28 +370,27 @@ export class TwobidSDKWebImpl implements TwobidSDKImpl {
     console.log("TwobidSDK::purchaseSubscription", args);
   }
 
-  rate(): void {
-    console.log("TwobidSDK::rate");
+  billingGetPurchases(): Promise<{ purchases: Purchase[] }> {
+    return Promise.resolve({purchases: []});
   }
 
-  registerAdView(args: { viewId: string }): void {
-    console.log("TwobidSDK::registerAdView ", args.viewId);
+  billingRegisterPurchaseStateChange(callback: PurchaseStateChangeCallback): Promise<string> {
+    return Promise.resolve("");
   }
 
-  showInterstitial(args: { placement: string; adSource?: AdSource }): Promise<void> {
-    console.log("TwobidSDK::showInterstitial ", args);
+  billingUnregisterPurchaseStateChange(options: { callbackId: string }): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  showRewardedVideo(args: { placement: string }, callback: (val: string) => void): Promise<void> {
-    console.log("TwobidSDK::showRewardedVideo ", args.placement);
-    return Promise.resolve(undefined);
+  adsNoAdsInternal(): Promise<{ result: boolean }> {
+    return Promise.resolve({result: false});
   }
 
-  update(): void {
-    console.log("TwobidSDK::update called");
+  adsNoAds(): Promise<boolean> {
+    return Promise.resolve(false);
   }
 
+  // consent
   requestConsent(): Promise<{ hasConsent: boolean }> {
     console.log("TwobidSDK::requestConsent called");
     return Promise.resolve({hasConsent: true});
@@ -146,144 +401,65 @@ export class TwobidSDKWebImpl implements TwobidSDKImpl {
     return Promise.resolve({hasConsent: true});
   }
 
-  getPurchases(): Promise<{ purchases: Purchase[] }> {
-    return Promise.resolve({purchases: []});
+  // personalization
+  personalizationGetString(args: { key: string, defaultValue: string }): Promise<string> {
+    console.log("TwobidSDK::personalizationGetString called");
+    return Promise.resolve(args.defaultValue);
   }
 
-  registerPurchaseStateChange(callback: PurchaseStateChangeCallback): Promise<string> {
-    return Promise.resolve("");
+  personalizationGetLong(args: { key: string, defaultValue: number }): Promise<number> {
+    console.log("TwobidSDK::personalizationGetLong called");
+    return Promise.resolve(args.defaultValue);
   }
 
-  unregisterPurchaseStateChange(options: { callbackId: string }): Promise<void> {
-    return Promise.resolve(undefined);
+  personalizationGetInt(args: { key: string, defaultValue: number }): Promise<number> {
+    console.log("TwobidSDK::personalizationGetInt called");
+    return Promise.resolve(args.defaultValue);
+  }
+
+  personalizationGetBoolean(args: { key: string, defaultValue: boolean }): Promise<boolean> {
+    console.log("TwobidSDK::personalizationGetBoolean called");
+    return Promise.resolve(args.defaultValue);
+  }
+
+  personalizationGetDouble(args: { key: string, defaultValue: number }): Promise<number> {
+    console.log("TwobidSDK::personalizationGetDouble called");
+    return Promise.resolve(args.defaultValue);
+  }
+
+  // rating
+  nativeRatingDialog(): void {
+    console.log("TwobidSDK::nativeRatingDialog called");
+  }
+
+  ratingDialog(args: { placementId: string, useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
+    console.log("TwobidSDK::ratingDialog called");
+    return Promise.resolve({result: false});
+  }
+
+  // update
+  updateRequest(): void {
+    console.log("TwobidSDK::updateRequest called");
+  }
+
+  // internal stuff
+
+  version(): Promise<AppVersionData> {
+    return Promise.resolve({
+      versionCode: 1,
+      versionName: "1.0.0",
+      hdataVersion: "randomhash-12345",
+      twobidSdkVersion: "1.0.0"
+    });
   }
 }
 
-
-let TwobidSDKPlugin = registerPlugin<TwobidSDKImpl>(
+TwobidSDKPlugin = registerPlugin<ITwobidSDK>(
   'TwobidSDK',
   {
-    web: () => new TwobidSDKWebImpl()
+    web: () => new TwobidSDKDummy()
   }
 );
-
-
-export class TwobidSDKProxy implements TwobidSDKImpl {
-  htmlAdViews: HTMLHtmlElement[] = [];
-
-  constructor() {
-    this.registerPurchaseStateChange(async (state) => {
-      return this.updateAdViewsVisibility(state);
-    }).then();
-  }
-
-  changeConsent(): Promise<{ hasConsent: boolean }> {
-    return TwobidSDKPlugin.changeConsent();
-  }
-
-  event(args: { event: string; value: object }): void {
-    TwobidSDKPlugin.event(args);
-  }
-
-  getDefaultProductPrice(args: { productName: string }): Promise<string> {
-    return TwobidSDKPlugin.getDefaultProductPrice(args);
-  }
-
-  getPurchases(): Promise<{ purchases: Purchase[] }> {
-    return TwobidSDKPlugin.getPurchases();
-  }
-
-  insertAnchoredBannerAdInto(args: { placement: string; viewId: string }): void {
-    TwobidSDKPlugin.insertAnchoredBannerAdInto(args);
-  }
-
-  insertInlineBannerAdInto(args: { placement: string; viewId: string }): void {
-    TwobidSDKPlugin.insertInlineBannerAdInto(args);
-  }
-
-  purchaseConsumable(args: { purchaseId: string; productNames: string[] }, callback: PurchaseCallback): void {
-    TwobidSDKPlugin.purchaseConsumable(args, callback);
-  }
-
-  purchaseSubscription(args: {
-    purchaseId: string;
-    productName: string;
-    offerId?: string | null
-  }, callback: PurchaseCallback): void {
-    TwobidSDKPlugin.purchaseSubscription(args, callback);
-  }
-
-  rate(): void {
-    TwobidSDKPlugin.rate();
-  }
-
-  registerAdView(args: { viewId: string }): void {
-    TwobidSDKPlugin.registerAdView(args);
-  }
-
-  registerHtmlAdView(view: HTMLHtmlElement) {
-    if(!view) {
-      console.log("Attempted to register undefined HTML adview");
-      return;
-    }
-
-    this.htmlAdViews.push(view);
-  };
-
-  requestConsent(): Promise<{ hasConsent: boolean }> {
-    return TwobidSDKPlugin.requestConsent();
-  }
-
-  showInterstitial(args: { placement: string; adSource?: AdSource }): Promise<void> {
-    return TwobidSDKPlugin.showInterstitial(args);
-  }
-
-  showRewardedVideo(args: { placement: string }, callback: (val: string) => void): Promise<void> {
-    return TwobidSDKPlugin.showRewardedVideo(args, callback);
-  }
-
-  update(): void {
-    TwobidSDKPlugin.update();
-  }
-
-  registerPurchaseStateChange(callback: PurchaseStateChangeCallback): Promise<string> {
-    return TwobidSDKPlugin.registerPurchaseStateChange(callback);
-  }
-
-  unregisterPurchaseStateChange(options: { callbackId: string }): Promise<void> {
-    return TwobidSDKPlugin.unregisterPurchaseStateChange(options);
-  }
-
-  async showInterstitialIfNoPremium(args: { placement: string; adSource?: AdSource }) {
-    if (await this.hasPremium())
-      return;
-
-    return TwobidSDKPlugin.showInterstitial(args);
-  };
-
-  async hasPremium() {
-    const result = await TwobidSDKPlugin.getPurchases()
-
-    for (const purchase of result.purchases)
-      for (const lineItem of purchase.lineItems)
-        if (lineItem.premium)
-          return true;
-
-    return false;
-  };
-
-  async updateAdViewsVisibility(result: PurchaseStateChangeResult) {
-    console.log("TwobidSDK::updateAdViewsVisibility " + JSON.stringify(result));
-
-    let hasPremium = await this.hasPremium();
-
-    for(let view of this.htmlAdViews) {
-      if(view && view.style)
-        view.style.visibility = hasPremium ? "hidden" : "visible";
-    }
-
-    return Promise.resolve(undefined)
-  }
-}
-
 export const TwobidSDK = new TwobidSDKProxy();
+
+

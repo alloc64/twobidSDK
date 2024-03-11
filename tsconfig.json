@@ -1,5 +1,14 @@
 {
   "files": [
     "twobidsdk.plugin.ts"
-  ]
+  ],
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "es5",
+      "es2015.promise",
+      "es2015.proxy",
+      "es2015.reflect"
+    ]
+  }
 }
