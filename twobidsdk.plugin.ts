@@ -57,12 +57,14 @@ export class TwobidSDKProxy implements ITwobidSDK {
   };
 
   async updateAdViewsVisibility(result: PurchaseStateChangeResult) {
-    console.log("TwobidSDK::updateAdViewsVisibility " + JSON.stringify(result));
-
     let hasPremium = await this.adsNoAds();
 
+    console.log("TwobidSDK::updateAdViewsVisibility " + JSON.stringify(result) + " hasPremium: " + hasPremium);
+
     for (let view of this.htmlAdViews) {
-      if (view && view.style)
+      console.log("TwobidSDK::updateAdViewsVisibility view: ", view);
+
+      if (view)
         view.style.visibility = hasPremium ? "hidden" : "visible";
     }
 
