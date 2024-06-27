@@ -103,8 +103,16 @@ export class TwobidSDKProxy implements ITwobidSDK {
   }
 
   // billing
+
+  /**
+   * @deprecated Use billingGetProductPrice instead
+   */
   billingGetDefaultProductPrice(args: { productName: string, convertPrice: ConvertPrice }): Promise<string> {
     return TwobidSDKPlugin.billingGetDefaultProductPrice(args);
+  }
+
+  billingGetProductPrice(args: { productName: string; offerId?: string; convertPrice?: ConvertPrice }): Promise<string> {
+    return TwobidSDKPlugin.billingGetProductPrice(args);
   }
 
   billingPurchaseConsumable(args: { purchaseId: string; productNames: string[] }, callback: PurchaseCallback): void {
@@ -166,7 +174,7 @@ export class TwobidSDKProxy implements ITwobidSDK {
     TwobidSDKPlugin.nativeRatingDialog();
   }
 
-  ratingDialog(args: { placementId: string, useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
+  ratingDialog(args: { showAlways?: boolean, useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
     return TwobidSDKPlugin.ratingDialog(args);
   }
 
@@ -256,7 +264,12 @@ export interface ITwobidSDK {
   adsShowExitAdDialog(args: { placement: string }, callback: (result: {canceled: boolean}) => void): Promise<void>;
 
   // billing
+  /**
+   * @deprecated Use billingGetProductPrice instead
+   */
   billingGetDefaultProductPrice(args: { productName: string, convertPrice: ConvertPrice }): Promise<string>;
+
+  billingGetProductPrice(args: { productName: string, offerId?: string, convertPrice?: ConvertPrice }): Promise<string>;
 
   billingPurchaseConsumable(args: { purchaseId: string, productNames: string[] }, callback: PurchaseCallback): void;
 
@@ -295,7 +308,7 @@ export interface ITwobidSDK {
   // rating
   nativeRatingDialog(): void;
 
-  ratingDialog(args: { placementId: string, useDefaultCallback?: boolean }): Promise<{ result: boolean }>
+  ratingDialog(args: { showAlways?: boolean, useDefaultCallback?: boolean }): Promise<{ result: boolean }>
 
   // update
   updateRequest(): void;
@@ -356,7 +369,14 @@ export class TwobidSDKDummy implements ITwobidSDK {
   }
 
   // billing
+  /**
+   * @deprecated Use billingGetProductPrice instead
+   */
   billingGetDefaultProductPrice(args: { productName: string, convertPrice: ConvertPrice }): Promise<string> {
+    return Promise.resolve("N/A");
+  }
+
+  billingGetProductPrice(args: { productName: string; offerId?: string; convertPrice?: ConvertPrice }): Promise<string> {
     return Promise.resolve("N/A");
   }
 
@@ -434,7 +454,7 @@ export class TwobidSDKDummy implements ITwobidSDK {
     console.log("TwobidSDK::nativeRatingDialog called");
   }
 
-  ratingDialog(args: { placementId: string, useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
+  ratingDialog(args: { useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
     console.log("TwobidSDK::ratingDialog called");
     return Promise.resolve({result: false});
   }
