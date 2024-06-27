@@ -454,7 +454,7 @@ export class TwobidSDKDummy implements ITwobidSDK {
     console.log("TwobidSDK::nativeRatingDialog called");
   }
 
-  ratingDialog(args: { useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
+  ratingDialog(args: { showAlways?: boolean, useDefaultCallback?: boolean }): Promise<{ result: boolean }> {
     console.log("TwobidSDK::ratingDialog called");
     return Promise.resolve({result: false});
   }
